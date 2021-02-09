@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>	
+	<head>
+		<title>Gravity phenomenon</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r122/three.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/three@0.85.0/examples/js/controls/OrbitControls.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.1.0/math.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+        
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<style>
+		  body{
+		/* set margin to 0 and overflow to hidden, 
+		to use the complete page */
+		      margin: 0;
+		      overflow: hidden;
+		  }
+          #gui { 
+              position: absolute; 
+              top: 2px; 
+              left: 2px; 
+            }
+            @media only screen and (max-width: 768px) {
+                #gui{
+                    width: 100%;
+                }
+            }
+		</style>
+	</head>
+	<body>
+		<!--Div which will hold the Output -->
+        
+        <div id="WebGL-output">
+        </div>
+        
+		<!--Javascript code that runs our Three.js examples -->
+		<script type="text/javascript">
+            
+            const HEIGHT=window.innerHeight
+            const WIDTH=window.innerWidth
+            
+            var g=0.001
+            var STOP_TIME=-1
+            time=0
+		    var scene = new THREE.Scene();
+            //window.addEventListener("wheel", onMouseWheel);
+            
+            
+            
+            
+            //setting camera
+            var camera = new THREE.PerspectiveCamera(100, WIDTH / HEIGHT, 0.1, 100000);
+            camera.position.z = 350;
+            
+
+            var material =new THREE.MeshPhongMaterial({shininess:10, color: 0xffffff})
+            
+            
+            var gui = new dat.gui.GUI();
+            gui.domElement.id = 'gui';
+            
+            var objs=[]/*
+                 new Objects([0,0,0], [0,0,0], [100000, 30], "1", "star"),
+                 new Objects([100,0,0], [0,1,0], [100, 7], "2", "planet"),
+                 new Objects([-100,0,0], [0,0.65,0.4], [100, 10], "3", "planet")    
+                     ]   */
+            
+            //0;0;0;0;0;0;100000;30;#ffffff;Star;star---0;100;0;1;0;0;100;10;#418c00;Planet;planet---
+            var objs_copy=[]
+            
+            var start_button;
+            
+            var setting={
+                start:false,
+                G:0.001,
+                light_general:"#ff0000",
+                general_light:new THREE.AmbientLight(0x418c00),
+                ok: function(){
+                    g=this.G
+                    this.general_light.color=new THREE.Color(this.light_general); // soft white light
+                },
+                starter:function(){
+                    if(this.start){
+                        start_button.name("Start")
+                    }else{
+                        time+=1
+                        start_button.name("Stop")
+                        gui.close()
+                        
+                    }
+                    this.start=!this.start
+                },
+                reloader:function(){
+                    objs=objs_copy
+                }
+            }
+            
+            start_button=gui.add(setting, 'starter').name("Start")
+            //gui.add(setting, 'reloader').name("Reload")
+            
+            scene.add(setting.general_light);
+            
+            
+            class Objects{
+                constructor(coord, velocity,  params, name, objType){
+                    
+                    this.coord=coord
+                    this.coord_=coord
+                    this.velocity=velocity
+                    this.velocity_=velocity
+                    this.accel=[0,0,0];
+                    this.params=params
+                    this.name=name
+                    
+                    
+                    this.objType=objType
+                    if(objType=="planet"){
+                        this.generatePlanet()
+                    }
+                    if(objType=="star"){
+                        this.generateStar()
+                    }
+                    
+                        
+                }
+                generatePlanet(){
+                    var geometry = new THREE.SphereGeometry( this.params[1], 32, 32 );
+                    this.obj = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({shininess:1200, color: new THREE.Color(this.params[2])})); 
+                    scene.add( this.obj ); 
+                }
+                generateStar(){
+                    var geometry = new THREE.SphereGeometry( this.params[1], 32, 32 );
+                    this.obj = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({emissive:new THREE.Color(this.params[2])})); 
+                    scene.add(this.obj);   
+                }
+            }
+            
+            
+            var settings=gui.addFolder('Settings')
+            settings.addColor(setting, 'light_general')
+            settings.add(setting, 'G')
+            settings.add(setting, 'ok')
+            
+            
+            
+            var conv=gui.addFolder("Convert")
+            
+            
+            var adding=gui.addFolder("Add")
+            
+            
+            
+            console.log('slower')
+            convInfo={
+                str:"246?-847.5226608777425;-712.2323702281338;-2141.185499570561;2.9433435928822913;2.4728262009350575;8.738692457381555;500;2;#faf9ff;0;star----842.1364367456537;-486.9191526169106;1846.2091062273862;2.9243965963006615;1.6862989972320004;-7.533938620983107;500;2;#faf9ff;1;star----841.9483376278573;-241.79023057078248;1758.5461617311694;2.923590923682459;0.8422666291244764;-7.1774495273513885;500;2;#faf9ff;2;star----833.4565033100994;-24.222160864162625;-54.006461227746726;2.8904081685663896;0.07940235137296676;0.22149921060514124;500;2;#faf9ff;3;star----835.7754705331548;181.61546136446523;-651.4282323748695;2.899019025562367;-0.6335641171826252;2.654977736777758;500;2;#faf9ff;4;star----827.8360447750545;413.45761404193416;-396.57458868791235;2.8694514607076496;-1.434602208372201;1.6162198580400382;500;2;#faf9ff;5;star----811.1706984116436;659.6339267065815;77.03778052431548;2.8043448154090433;-2.290868282782887;-0.3097516147822124;500;2;#faf9ff;6;star----817.3035751722874;895.3489486697564;60.40663939445826;2.8350336941536236;-3.0980870315028404;-0.24554904088731752;500;2;#faf9ff;7;star----666.1838198245053;676.990498728741;-30.922458381121437;2.319105013567382;-2.342059606268064;0.12337334488412534;500;2;#faf9ff;8;star----575.3127533730711;507.199388910147;19.997026632035787;2.0021934518650486;-1.7619579880007479;-0.07824640441107873;500;2;#faf9ff;9;star----484.31952305608473;328.13022682972934;-189.35683303484447;1.6833101310619016;-1.1383086913889542;0.7700969239980281;500;2;#faf9ff;10;star----372.7975702958178;155.69849785860285;-67.51828510470997;1.2973965187790795;-0.5441130957856093;0.2777690749806014;500;2;#faf9ff;11;star----249.79343431565206;-55.53039620967623;-498.15236467230073;0.866794244585026;0.19129677653315666;2.0299132384286622;500;2;#faf9ff;12;star----127.0096171081991;-260.65795559707595;65.02471914162618;0.4376810639387674;0.9021056450284223;-0.26229319291954156;500;2;#faf9ff;13;star----8.078532225354031;-454.0497871396433;-317.4775687992806;0.027220284156617584;1.5687647781846537;1.2935116516787013;500;2;#faf9ff;14;star---132.91440138944236;-242.82938687672248;-132.70685423136962;-0.4584572020401058;0.8404567777384571;0.5423871064736943;500;2;#faf9ff;15;star---259.3329957123721;-7.865634712610334;-266.9472945356131;-0.8979861512866916;0.029304639039289777;1.0876362737838567;500;2;#faf9ff;16;star---372.4268283089862;224.86464595690697;174.40891807596526;-1.2925275290337386;-0.7793503011377522;-0.7111144698116395;500;2;#faf9ff;17;star---493.50851724992623;452.19505481499533;593.0007019501321;-1.713388117847809;-1.5674930479921567;-2.4188220348821274;500;2;#faf9ff;18;star---597.2253676571568;694.2697044869092;2018.271535522859;-2.074907963794636;-2.4094017866309874;-8.23611679329693;500;2;#faf9ff;19;star---734.9618528018907;947.4503590949317;-713.4991230321416;-2.5520791491726302;-3.2841031801327527;2.9117525725327273;500;2;#faf9ff;20;star---756.2151491368412;710.049902879581;-729.1603041777707;-2.624483917477179;-2.4679796690496976;2.9753352075641186;500;2;#faf9ff;21;star---760.1660081812877;458.7656292944742;1554.3006219276658;-2.6381044053734364;-1.5934506282612022;-6.343145749129173;500;2;#faf9ff;22;star---756.2709264847038;225.67945520218947;-1259.9726182098796;-2.6249887835528987;-0.7838060847346195;5.140802360573033;500;2;#faf9ff;23;star---746.9556272539522;-6.618770927753536;748.0606039132756;-2.591745820793659;0.022074374710346706;-3.0516371864042844;500;2;#faf9ff;24;star---756.0559668728279;-248.63680951252152;-586.6172195263694;-2.623167253542741;0.8626999997501161;2.3926231428127025;500;2;#faf9ff;25;star---760.8785897659646;-501.6487121168411;60.49121877656068;-2.640236936117951;1.7464632066542451;-0.246705557890985;500;2;#faf9ff;26;star---757.2795098695465;-686.2043878292756;80.90580059219462;-2.6290730860449965;2.3726411873007374;-0.3293899190181065;500;2;#faf9ff;27;star---",
+                f:function(){
+                    str_time=this.str.split('?')
+                    STOP_TIME=parseInt(str_time[0])
+                    objects_str=str_time[1].split('---')
+                    for(i=0; i<objects_str.length-1; i++){
+                        var chars=objects_str[i].split(';')
+                        objs.push(new Objects(
+                        [parseFloat(chars[0]), parseFloat(chars[1]), parseFloat(chars[2])],
+                        [parseFloat(chars[3]), parseFloat(chars[4]), parseFloat(chars[5])],
+                        [parseFloat(chars[6]), parseFloat(chars[7]),  chars[8]],
+                        chars[9],
+                        chars[10]
+                        ))
+                    }
+                },
+                p:function(){
+                    this.str="-1?"
+                    for(i=0;i<objs.length; i++){
+                        this.str+=objs[i].coord[0]+";"+objs[i].coord[1]+";"+objs[i].coord[2]+";"+
+                            (-objs[i].velocity[0])+";"+(-objs[i].velocity[1])+";"+(-objs[i].velocity[2])+";"+
+                            objs[i].params[0]+";"+objs[i].params[1]+";"+objs[i].params[2]+";"+objs[i].name+";"+objs[i].objType+"---"
+                    }
+                }
+            }
+            
+            convInfo.f()
+            var strs=conv.add(convInfo, 'str')
+            strs.name("G Code")
+            strs.listen()
+            conv.add(convInfo, 'f').name("Unparse")
+            conv.add(convInfo, 'p').name("Parse")
+            
+            
+            
+            function confirm(objects){
+                for(i=0; i<objects.length; i++){
+                    objects[i].coord_=objects[i].coord
+                    objects[i].velocity_=objects[i].velocity
+                    objects[i].accel=[0,0,0]
+                }
+            }
+            
+    
+            
+            var renderer = new THREE.WebGLRenderer(); 
+            renderer.setSize( WIDTH, HEIGHT ); 
+            document.body.appendChild( renderer.domElement );
+            
+
+            
+  
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.enableDamping = true;
+        controls.DampingFactor = 0.0;
+
+            
+            
+            //main loop
+            additional_fl=true
+            
+            dx=0.4
+            function render() {
+                
+	            requestAnimationFrame(render);
+                
+                if(setting.start || additional_fl){
+                    time+=1
+                    if(time==STOP_TIME){
+                        setting.start=false
+                        start_button.name("start")
+                    }
+                    additional_fl=false
+                    objs_copy=objs
+                for(i=0; i<objs.length; i++){
+                    for(j=0; j<objs.length; j++){
+                        if(i!=j){
+                            distant_x=objs[i].coord_[0]-objs[j].coord_[0]
+                            distant_y=objs[i].coord_[1]-objs[j].coord_[1]
+                            distant_z=objs[i].coord_[2]-objs[j].coord_[2]
+                            
+                            distant=Math.sqrt(distant_x*distant_x+distant_y*distant_y+distant_z*distant_z)
+                            
+                            if(distant<=dx){
+                                objs[i].accel=[0,0,0]
+                            }
+                            else{
+                            objs[i].accel[0]+=-distant_x/(distant*distant*distant)*g*(objs[j].params[0])
+                            objs[i].accel[1]+=-distant_y/(distant*distant*distant)*g*(objs[j].params[0])
+                            objs[i].accel[2]+=-distant_z/(distant*distant*distant)*g*(objs[j].params[0])
+                            }
+                            
+                        }
+                    }
+                    for(dim=0; dim<3; dim++){
+                        objs[i].velocity[dim]=objs[i].velocity_[dim]+objs[i].accel[dim]
+                        objs[i].coord[dim]=objs[i].coord[dim]+(objs[i].velocity[dim]+objs[i].velocity_[dim])/2
+                    }
+                }
+                }
+                for(i=0; i<objs.length; i++){
+                    objs[i].obj.position.x=objs[i].coord[0]
+                    objs[i].obj.position.y=objs[i].coord[1]
+                    objs[i].obj.position.z=objs[i].coord[2]
+                }
+                confirm(objs)
+	           renderer.render(scene, camera)
+            }
+            
+            render()
+		</script>
+	</body>
+</html>
